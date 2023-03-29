@@ -1,0 +1,13 @@
+\documentclass[4pt, amsfonts]{book}
+\usepackage{amssymb, amsmath}
+\usepackage[paperwidth=200cm,paperheight=200cm,landscape,top=2cm,bottom=2cm,left=2cm,right=2cm]{geometry}
+\usepackage{stmaryrd}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage{qtree}
+\begin{document}
+\begin{figure}[ht]
+\Tree [.{move1,[([the,hungry,mouse,finds,the,cheese,in,field,B,six,ty,four],[c],[find(hungry(mouse),loc(cheese,field(bFa(b,t10plus(6,4)))))])]} [.{merge3,[([finds,the,cheese,in,field,B,six,ty,four],[+g,c],[$\lambda$X1. (find(X1,loc(cheese,field(bFa(b,t10plus(6,4))))))]),([the,hungry,mouse],[-g],[hungry(mouse)])]} [.{merge1,[([finds,the,cheese,in,field,B,six,ty,four],[=n,+g,c],[$\lambda$X1. (find(X1,loc(cheese,field(bFa(b,t10plus(6,4))))))])]} [.{[finds],[=d,=n,+g,c],[$\lambda$X1.$\lambda$X2. (find(X2,X1))]} ][.{merge1,[([the,cheese,in,field,B,six,ty,four],[d],[loc(cheese,field(bFa(b,t10plus(6,4))))])]} [.{[the],[=n,d],[$\lambda$X1. (X1)]} ][.{merge2,[([cheese,in,field,B,six,ty,four],[n],[loc(cheese,field(bFa(b,t10plus(6,4))))])]} [.{merge1,[([in,field,B,six,ty,four],[=n,n],[$\lambda$X1. (loc(X1,field(bFa(b,t10plus(6,4)))))])]} [.{[in],[=n,=n,n],[$\lambda$X1.$\lambda$X2. (loc(X2,X1))]} ][.{merge1,[([field,B,six,ty,four],[n],[field(bFa(b,t10plus(6,4)))])]} [.{[field],[=f,n],[$\lambda$X1. (field(X1))]} ][.{merge2,[([B,six,ty,four],[f],[bFa(b,t10plus(6,4))])]} [.{merge1,[([six,ty,four],[=let,f],[$\lambda$X1. (bFa(X1,t10plus(6,4)))])]} [.{[$\epsilon$],[=c4,=let,f],[$\lambda$X1.$\lambda$X2. (bFa(X2,X1))]} ][.{merge1,[([six,ty,four],[c4],[t10plus(6,4)])]} [.{[$\epsilon$],[=c2,c4],[$\lambda$X1. (X1)]} ][.{merge2,[([six,ty,four],[c2],[t10plus(6,4)])]} [.{merge1,[([ty,four],[=ctee,c2],[$\lambda$X1. (t10plus(X1,4))])]} [.{[ty],[=c1,=ctee,c2],[$\lambda$X1.$\lambda$X2. (t10plus(X2,X1))]} ][.{move1,[([four],[c1],[4])]} [.{merge3,[([$\epsilon$],[+tee,c1],[$\lambda$X1. (X1)]),([four],[-tee],[4])]} [.{[$\epsilon$],[=c1,+tee,c1],[$\lambda$X1. (X1)]} ][.{[four],[c1,-tee],[4]} ] ] ] ][.{move1,[([six],[ctee],[6])]} [.{merge3,[([$\epsilon$],[+tee,ctee],[$\lambda$X1. (X1)]),([six],[-tee],[6])]} [.{[$\epsilon$],[=c1,+tee,ctee],[$\lambda$X1. (X1)]} ][.{[six],[c1,-tee],[6]} ] ] ] ] ] ][.{[B],[let],[b]} ] ] ] ][.{[cheese],[n],[cheese]} ] ] ] ][.{merge1,[([the,hungry,mouse],[n,-g],[hungry(mouse)])]} [.{[the],[=n,n,-g],[$\lambda$X1. (X1)]} ][.{merge1,[([hungry,mouse],[n],[hungry(mouse)])]} [.{[hungry],[=n,n],[$\lambda$X1. (hungry(X1))]} ][.{[mouse],[n],[mouse]} ] ] ] ] ]
+\end{figure}
+\end{document}
