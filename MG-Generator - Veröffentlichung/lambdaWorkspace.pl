@@ -1,3 +1,4 @@
+:- module(lambdaWorkspace,[generateExp/2]).
 % file: lambdaWorkspace.pl
 % origin author : J. Kuhn
 % origin date: May 2021
@@ -8,34 +9,35 @@
 %:- op(500, fx, *). % for category features
 %:- ['listening/enrich'].
 
+%gDebugMode.
+gDebugMode :- false.
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%	 -> Take LI
+%    -> use merge/move for as long as possible
+%    -> take next LI, if possible
+%    -> repeat until no LI is left
+%    -> check derivation tree
+%NB: If in the future different types of MGs are to be implemented, use Dicts-structure for tree and li
+%    Sonderfall, dass nur ein Item eingefügt wird mal lösen
 
-/*
-NB: -> Take LI
-    -> use merge/move for as long as possible
-    -> take next LI, if possible
-    -> repeat until no LI is left
-    -> check derivation tree
-NB: If in the future different types of MGs are to be implemented, use Dicts-structure for tree and li
-NB: Sonderfall, dass nur ein Item eingefügt wird mal lösen
-*/
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% generate([LI-Eingabeliste],[Ableitungsbaum]).
+% generateExp([LI-Eingabeliste],[Ableitungsbaum]).
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-generate([],[]).
-generate(LI,DT) :-
+generateExp([],[]).
+generateExp(LI,DT) :-
     workspace(LI,[],DT).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % worspace(+Li-Liste,+Workspace,-Derivation Tree)
 % Worspace works with FIFO, if two items have the same category
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-workspace([],WSpace,DT) :- mg_function([],WSpace,PotDT), checkSpace(PotDT, DT). % Keine LIs in der Liste (mehr) -> MG-funktionen probieren wie geht und überprüfen, ob EIN Baum entsteht (-> Dann zu verify)
-workspace([LI|LIs],[],DT) :- mg_function([],[LI],WSpace), workspace(LIs,WSpace,DT). % Noch kein Workspace -> erste LI rein und Workspace erstellen -> weiter iterieren
-workspace([LI|LIs],WSpace,DT) :- append(WSpace,[LI],NewList), mg_function([],NewList,NewSpace),workspace(LIs,NewSpace,DT). % LI in bestehende Workspace rein -> MG-Funktionen an nun erweiterten Workspace probieren wie geht -> weiter iterieren
-workspace(_,_,_) .
+workspace([],WSpace,DT) :- (gDebugMode -> nl,writeln('final round through the workspace');true),mg_function([],WSpace,PotDT), checkSpace(PotDT, DT). % Keine LIs in der Liste (mehr) -> MG-funktionen probieren wie geht und überprüfen, ob EIN Baum entsteht (-> Dann zu verify)
+workspace([LI|LIs],[],DT) :- (gDebugMode -> nl,writeln('first round through the workspace');true),mg_function([],[LI],WSpace), workspace(LIs,WSpace,DT). % Noch kein Workspace -> erste LI rein und Workspace erstellen -> weiter iterieren
+workspace([LI|LIs],WSpace,DT) :- (gDebugMode-> nl,writeln('nth round through the workspace');true),append(WSpace,[LI],NewList), mg_function([],NewList,NewSpace),workspace(LIs,NewSpace,DT). % LI in bestehende Workspace rein -> MG-Funktionen an nun erweiterten Workspace probieren wie geht -> weiter iterieren
+workspace(_,_,_) :- (gDebugMode -> nl, writeln('Workspace not fitting');true).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % merge   -> tree([([W],[Fs],L)],MGFunc,Subtree1,Subtree2)
 % move    -> tree([([W],[Fs],L)],MGFunc,empty   ,Subtree)
@@ -45,131 +47,131 @@ workspace(_,_,_) .
 % mg_function(+no_match_Work_space, +Workspace_to_be_worked_on, -Derivation_Tree(s)_as_far_as_possible)
 % probiert die verschiedenen MG-Funktionen nach möglichkeit am Workspace (FIFO bei Gleichstand (merge)/ SMC(Move))
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-mg_function(WS,[],WS). % empty worked_on_WS -> no_match_WS = NewWS
-mg_function([],[li(W,Fs,L)],[li(W,Fs,L)]). % only one LI -> only one LI
-mg_function(NoMatWS,[tree([(W,[+X|Fs],L)|Chains],MGFunc, Subl, Subr)|Items], NewWS) :- tryMoveSor(NoMatWS,tree([(W,[+X|Fs],L)|Chains],MGFunc, Subl, Subr),Items, [], NewWS).  % Tree and +X -> try move
-mg_function(NoMatWS,[tree([(W,[-X|Fs],L)|Chains],MGFunc, Subl, Subr)|Items], NewWS) :- tryMoveSee(NoMatWS,tree([(W,[-X|Fs],L)|Chains],MGFunc, Subl, Subr),Items, NewWS).      % Tree and -X -> try move
-mg_function(NoMatWS,[tree([(W,[=X|Fs],L)|Chains],MGFunc, Subl, Subr)|Items], NewWS) :- tryMergeSel(NoMatWS,tree([(W,[=X|Fs],L)|Chains],MGFunc, Subl, Subr),Items,[],NewWS).   % Tree and =X -> try merge
-mg_function(NoMatWS,[tree([(W,[ X|Fs],L)|Chains],MGFunc, Subl, Subr)|Items], NewWS) :- tryMergeCat(NoMatWS,tree([(W,[ X|Fs],L)|Chains],MGFunc, Subl, Subr),Items,[],NewWS).   % Tree and  X -> try merge
-mg_function(NoMatWS,[li(W,[=X|Fs],L)|Items], NewWS) :- tryMergeSel(NoMatWS,li(W,[=X|Fs],L),Items,[],NewWS). % LI and =X -> try merge
-mg_function(NoMatWS,[li(W,[ X|Fs],L)|Items], NewWS) :- tryMergeCat(NoMatWS,li(W,[ X|Fs],L),Items,[],NewWS). % LI and  X -> try merge
-mg_function(_,_,_).
+mg_function(WS,[],WS):- (gDebugMode -> writeln('found final WS: '), writeln(WS);true). % empty worked_on_WS -> no_match_WS = NewWS
+mg_function([],[li(W,Fs,L)],[li(W,Fs,L)]):- (gDebugMode -> writeln('only one Item: '), writeln(li(W,Fs,L));true). % only one LI -> only one LI
+mg_function(NoMatWS,[tree([(W,[+X|Fs],L)|Chains],MGFunc, Subl, Subr)|Items], NewWS) :- (gDebugMode -> nl,writeln('TryMove Licensor'), write(NoMatWS), nl,writeln([tree([(W,[+X|Fs],L)|Chains],MGFunc, Subl, Subr)|Items]);true),tryMoveSor(NoMatWS,tree([(W,[+X|Fs],L)|Chains],MGFunc, Subl, Subr),Items, [], NewWS).  % Tree and +X -> try move
+mg_function(NoMatWS,[tree([(W,[-X|Fs],L)|Chains],MGFunc, Subl, Subr)|Items], NewWS) :- (gDebugMode -> nl,writeln('TryMove Licensee'), write(NoMatWS), nl,writeln([tree([(W,[-X|Fs],L)|Chains],MGFunc, Subl, Subr)|Items]);true),tryMoveSee(NoMatWS,tree([(W,[-X|Fs],L)|Chains],MGFunc, Subl, Subr),Items, NewWS).      % Tree and -X -> try move
+mg_function(NoMatWS,[tree([(W,[=X|Fs],L)|Chains],MGFunc, Subl, Subr)|Items], NewWS) :- (gDebugMode -> nl,writeln('TryMerge Selector DI'),write(NoMatWS),  nl,writeln([tree([(W,[=X|Fs],L)|Chains],MGFunc, Subl, Subr)|Items]);true),tryMergeSel(NoMatWS,tree([(W,[=X|Fs],L)|Chains],MGFunc, Subl, Subr),Items,[],NewWS).   % Tree and =X -> try merge
+mg_function(NoMatWS,[tree([(W,[ X|Fs],L)|Chains],MGFunc, Subl, Subr)|Items], NewWS) :- (gDebugMode -> nl,writeln('TryMerge Category DI'), write(NoMatWS), nl,writeln([tree([(W,[ X|Fs],L)|Chains],MGFunc, Subl, Subr)|Items]);true),tryMergeCat(NoMatWS,tree([(W,[ X|Fs],L)|Chains],MGFunc, Subl, Subr),Items,[],NewWS).   % Tree and  X -> try merge
+mg_function(NoMatWS,[li(W,[=X|Fs],L)|Items], NewWS) :- (gDebugMode -> nl,writeln('TryMerge Selector LI'), write(NoMatWS), nl, writeln([li(W,[=X|Fs],L)|Items]);true),tryMergeSel(NoMatWS,li(W,[=X|Fs],L),Items,[],NewWS). % LI and =X -> try merge
+mg_function(NoMatWS,[li(W,[ X|Fs],L)|Items], NewWS) :- (gDebugMode -> nl,writeln('TryMerge category LI'),write(NoMatWS),  nl, writeln([li(W,[ X|Fs],L)|Items]);true),tryMergeCat(NoMatWS,li(W,[ X|Fs],L),Items,[],NewWS). % LI and  X -> try merge
+mg_function(_,_,_) :- (gDebugMode -> nl, writeln( 'no matching Element for MG Functions');true).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Try functions for move and merge, separated acording to which feature triggerd them
 % tryMerge triggered by Selektor features
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 tryMergeSel(NoMatWS,li(W,[=X|Fs],L), [li(V,[ X],M)|Items], NoFit, NewWS) :-                                                                                      % Li/Li merge1
-
+                                                  (gDebugMode -> nl, write('TryMerge Selector LI/LI merge1');true),
                                                   merge1( li(W,[=X|Fs],L), li(V,[X],M),NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append([NewTree|NoFit], Items, WsTree),append(NoMatWS,WsTree,WholeWS), mg_function([],WholeWS,NewWS).
 tryMergeSel(NoMatWS,li(W,[=X|Fs],L), [li(V,[ X|Fps],M)|Items], NoFit, NewWS) :-                                                                                  % Li/Li merge3
-
+                                                  (gDebugMode -> nl, write('TryMerge Selector LI/LI merge3');true),
                                                   merge3( li(W,[=X|Fs],L), li(V,[X|Fps],M),NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append([NewTree|NoFit], Items, WsTree),append(NoMatWS,WsTree,WholeWS), mg_function([],WholeWS,NewWS).
 tryMergeSel(NoMatWS,li(W,[=X|Fs],L),[tree([(V,[ X],M)|Chain2s],MGFunc, Sub2l, Sub2r)|Items], NoFit,NewWS) :-                                                             % Li/Di merge1
-
+                                                  (gDebugMode -> nl, write('TryMerge Selector LI/DI merge1');true),
                                                   merge1( li(W,[=X|Fs],L), tree([(V,[X],M)|Chain2s],MGFunc, Sub2l, Sub2r), NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append([NewTree|NoFit], Items, WsTree),append(NoMatWS,WsTree,WholeWS), mg_function([],WholeWS,NewWS).
 tryMergeSel(NoMatWS,li(W,[=X|Fs],L), [tree([(V,[ X|Fps],M)|Chain2s],MGFunc, Sub2l, Sub2r)|Items], NoFit,NewWS) :-                                                        % Li/Di merge3
-
+                                                  (gDebugMode -> nl, write('TryMerge Selector LI/DI merge3');true),
                                                   merge3( li(W,[=X|Fs],L), tree([(V,[X|Fps],M)|Chain2s],MGFunc, Sub2l, Sub2r), NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append([NewTree|NoFit], Items, WsTree),append(NoMatWS,WsTree,WholeWS), mg_function([],WholeWS,NewWS).
 tryMergeSel(NoMatWS,tree([(W,[=X|Fs],L)|Chains],MGFunc, Subl, Subr), [li(V,[ X],M)|Items], NoFit, NewWS) :-                                                              % Di/Li merge2
-
+                                                  (gDebugMode -> nl, write('TryMerge Selector DI/LI merge2');true),
                                                   merge2( tree([(W,[=X|Fs],L)|Chains],MGFunc, Subl, Subr), li(V,[X],M),NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append([NewTree|NoFit], Items, WsTree),append(NoMatWS,WsTree,WholeWS), mg_function([],WholeWS,NewWS).
 tryMergeSel(NoMatWS,tree([(W,[=X|Fs],L)|Chains],MGFunc, Subl, Subr), [li(V,[ X|Fps],M)|Items], NoFit, NewWS) :-                                                          % Di/Li merge3
-
+                                                  (gDebugMode -> nl, write('TryMerge Selector DI/LI merge3');true),
                                                   merge3( tree([(W,[=X|Fs],L)|Chains],MGFunc, Subl, Subr), li(V,[X|Fps],M),NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append([NewTree|NoFit], Items, WsTree),append(NoMatWS,WsTree,WholeWS), mg_function([],WholeWS,NewWS).
 tryMergeSel(NoMatWS,tree([(W,[=X|Fs],L)|Chains],MGFunc1, Subl, Subr), [tree([(V,[ X],M)|Chain2s],MGFunc2, Sub2l, Sub2r)|Items], NoFit, NewWS) :-                                   % Di/Di merge2
-
+                                                  (gDebugMode -> nl, write('TryMerge Selector DI/DI merge2');true),
                                                   merge2( tree([(W,[=X|Fs],L)|Chains],MGFunc1, Subl, Subr), tree([(V,[X],M)|Chain2s],MGFunc2, Sub2l, Sub2r), NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append([NewTree|NoFit], Items, WsTree),append(NoMatWS,WsTree,WholeWS), mg_function([],WholeWS,NewWS).
 tryMergeSel(NoMatWS,tree([(W,[=X|Fs],L)|Chains],MGFunc1, Subl, Subr), [tree([(V,[ X|Fps],M)|Chain2s],MGFunc2, Sub2l, Sub2r)|Items], NoFit, NewWS) :-                               % Di/Di merge3
-
+                                                  (gDebugMode -> nl, write('TryMerge Selector DI/DI merge3');true),
                                                   merge3( tree([(W,[=X|Fs],L)|Chains],MGFunc1, Subl, Subr), tree([(V,[X|Fps],M)|Chain2s],MGFunc2, Sub2l, Sub2r), NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append([NewTree|NoFit], Items, WsTree),append(NoMatWS,WsTree,WholeWS), mg_function([],WholeWS,NewWS).
-tryMergeSel(NoMatWS,Selektor,[],WS, NewWS) :- append(NoMatWS,[Selektor],NewNoMatWS), mg_function(NewNoMatWS,WS,NewWS).                                       % no match found in the whole work space, try if other feature pairs can be found in the rest of the work space
-tryMergeSel(NoMatWS,Selektor, [Element| Items],  NoFit, NewWS) :- append(NoFit, [Element], NewNoFit), tryMergeSel(NoMatWS, Selektor, Items, NewNoFit, NewWS).         % next item in work space not a match, try the next one
-tryMergeSel(_,_,_,_,_).
+tryMergeSel(NoMatWS,Selektor,[],WS, NewWS) :- (gDebugMode -> nl, writeln('TryMerge Selector No Match, try other Feature in WS');true), append(NoMatWS,[Selektor],NewNoMatWS), mg_function(NewNoMatWS,WS,NewWS).                                       % no match found in the whole work space, try if other feature pairs can be found in the rest of the work space
+tryMergeSel(NoMatWS,Selektor, [Element| Items],  NoFit, NewWS) :- (gDebugMode -> nl,writeln('TryMerge Selector No Match, try matching with other Item in WS');true),append(NoFit, [Element], NewNoFit), tryMergeSel(NoMatWS, Selektor, Items, NewNoFit, NewWS).         % next item in work space not a match, try the next one
+tryMergeSel(_,_,_,_,_) :- (gDebugMode -> nl, writeln('Somehow wrong input in tryMergeSel');true).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % tryMerge triggered by Category feature
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 tryMergeCat(NoMatWS,li(W,[X],L), [li(V,[=X|Fps],M)|Items], NoFit, NewWS) :-                                                                                            % Li/Li merge1
-
+                                                  (gDebugMode -> nl, write('TryMerge Category LI/LI merge1');true),
                                                   merge1(li(V,[=X|Fps],M),li(W,[ X],L), NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append(NoFit, [NewTree|Items], WsTree),append(NoMatWS,WsTree,WholeWS), mg_function([],WholeWS,NewWS).
 tryMergeCat(NoMatWS,li(W,[X| Fs],L), [li(V,[=X|Fps],M)|Items], NoFit, NewWS) :-                                                                                        % Li/Li merge3
-
+                                                  (gDebugMode -> nl, write('TryMerge Category LI/LI merge3');true),
                                                   merge3(li(V,[=X|Fps],M), li(W,[ X| Fs],L), NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append(NoFit, [NewTree|Items], WsTree),append(NoMatWS,WsTree,WholeWS), mg_function([],WholeWS,NewWS).
 tryMergeCat(NoMatWS,li(W,[X],L), [tree([(V,[=X|Fps],M)|Chains],MGFunc, Subl, Subr)|Items], NoFit, NewWS) :-                                                                    % Li/Di merge2
-
+                                                  (gDebugMode -> nl, write('TryMerge Category LI/DI merge2');true),
                                                   merge2(tree([(V,[=X|Fps],M)|Chains],MGFunc, Subl, Subr),li(W,[ X],L), NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append(NoFit, [NewTree|Items], WsTree),append(NoMatWS,WsTree,WholeWS), mg_function([],WholeWS,NewWS).
 tryMergeCat(NoMatWS,li(W,[X| Fs],L), [tree([(V,[=X|Fps],M)|Chains],MGFunc, Subl, Subr)|Items], NoFit, NewWS) :-                                                                % Li/Di merge3
-
+                                                  (gDebugMode -> nl, write('TryMerge Category LI/DI merge3');true),
                                                   merge3(tree([(V,[=X|Fps],M)|Chains],MGFunc, Subl, Subr),li(W,[ X| Fs],L), NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append(NoFit, [NewTree|Items], WsTree),append(NoMatWS,WsTree,WholeWS), mg_function([],WholeWS,NewWS).
 tryMergeCat(NoMatWS,tree([(W,[X],L)|Chains],MGFunc, Subl, Subr), [li(V,[=X| Fps],M)|Items], NoFit, NewWS) :-                                                                   % Di/Li merge1
-
+                                                  (gDebugMode -> nl, write('TryMerge Category DI/LI merge1');true),
                                                   merge1(li(V,[=X| Fps],M), tree([(W,[ X],L)|Chains],MGFunc, Subl, Subr), NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append(NoFit, [NewTree|Items], WsTree),append(NoMatWS,WsTree,WholeWS), mg_function([],WholeWS,NewWS).
 tryMergeCat(NoMatWS,tree([(W,[X| Fs],L)|Chains],MGFunc, Subl, Subr), [li(V,[=X| Fps],M)|Items], NoFit, NewWS) :-                                                               % Di/Li merge3
-
+                                                  (gDebugMode -> nl, write('TryMerge Category DI/LI merge3');true),
                                                   merge3(li(V,[=X| Fps],M),tree([(W,[ X| Fs],L)|Chains],MGFunc, Subl, Subr), NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append(NoFit, [NewTree|Items], WsTree),append(NoMatWS,WsTree,WholeWS), mg_function([],WholeWS,NewWS).
 tryMergeCat(NoMatWS,tree([(W,[X],L)|Chains],MGFunc1, Subl, Subr), [tree([(V,[=X|Fps],M)|Chain2s],MGFunc2, Sub2l, Sub2r)|Items], NoFit, NewWS) :-                                         % Di/Di merge2
-
+                                                  (gDebugMode-> nl, write('TryMerge Category DI/DI merge2');true),
                                                   merge2(tree([(V,[=X|Fps],M)|Chain2s],MGFunc2, Sub2l, Sub2r), tree([(W,[ X],L)|Chains],MGFunc1, Subl, Subr), NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append(NoFit, [NewTree|Items], WsTree),append(NoMatWS,WsTree,WholeWS), mg_function([],WholeWS,NewWS).
 tryMergeCat(NoMatWS,tree([(W,[X| Fs],L)|Chains],MGFunc1, Subl, Subr), [tree([(V,[=X|Fps],M)|Chain2s],MGFunc2, Sub2l, Sub2r)|Items], NoFit, NewWS) :-                                     % Di/Di merge3
-
+                                                  (gDebugMode -> nl, write('TryMerge Category DI/DI merge3');true),
                                                   merge3(tree([(V,[=X|Fps],M)|Chain2s],MGFunc2, Sub2l, Sub2r), tree([(W,[ X| Fs],L)|Chains],MGFunc1, Subl, Subr), NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append(NoFit, [NewTree|Items], WsTree),append(NoMatWS,WsTree,WholeWS), mg_function([],WholeWS,NewWS).
-tryMergeCat(NoMatWS,Category,[],WS,NewWS) :- append(NoMatWS,[Category],NewNoMatWS), mg_function(NewNoMatWS,WS,NewWS).                                               % no match found in the whole work space, try if other feature pairs can be found in the rest of the work space
-tryMergeCat(NoMatWS,Category, [Element| Items], NoFit, NewWS) :-  append(NoFit, [Element], NewNoFit), tryMergeCat(NoMatWS, Category, Items, NewNoFit, NewWS).                        % next item in work space not a match, try the next one
-tryMergeCat(_,_,_,_,_).
+tryMergeCat(NoMatWS,Category,[],WS,NewWS) :- (gDebugMode -> nl, writeln('TryMerge Category No Match, try other Feature in WS');true),append(NoMatWS,[Category],NewNoMatWS), (gDebugMode -> write(NewNoMatWS),nl,writeln(WS);true),mg_function(NewNoMatWS,WS,NewWS).                                               % no match found in the whole work space, try if other feature pairs can be found in the rest of the work space
+tryMergeCat(NoMatWS,Category, [Element| Items], NoFit, NewWS) :- (gDebugMode -> nl,writeln('TryMerge Category No Match, try matching with other Item in WS');true), append(NoFit, [Element], NewNoFit), tryMergeCat(NoMatWS, Category, Items, NewNoFit, NewWS).                        % next item in work space not a match, try the next one
+tryMergeCat(_,_,_,_,_) :- (gDebugMode -> nl, writeln('Somehow wrong input in tryMergeCat');true).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % tryMove triggered by Licensor features
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 tryMoveSor(NoMatWS,tree([(W,[+X| Fs],L),(V,[-X],M)|Chains],MGFunc, Subl, Subr), Items, NoFit,NewWS) :-                                                                         % move1
                                                   !,checkSMC(+X,Chains),
-
+                                                  (gDebugMode -> nl, write('TryMove Licensor move1');true),
                                                   move1(tree([(W,[+X| Fs],L),(V,[-X],M)|Chains],MGFunc, Subl, Subr), NoFit, NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append(NoMatWS,[NewTree|Items],WholeWS), mg_function([],WholeWS, NewWS).
 tryMoveSor(NoMatWS,tree([(W,[+X| Fs],L),(V,[-X| Fps],M)|Chains],MGFunc, Subl, Subr), Items, NoFit,NewWS) :-                                                                    % move2
                                                   !,checkSMC(+X,Chains),
-
+                                                  (gDebugMode -> nl, write('TryMove Licensor move2');true),
                                                   move2(tree([(W,[+X| Fs],L),(V,[-X| Fps],M)|Chains],MGFunc, Subl, Subr), NoFit, NewTree),
-
+                                                  (gDebugMode -> nl, writeln(NewTree);true),
                                                   append(NoMatWS,[NewTree|Items],WholeWS), mg_function([],WholeWS, NewWS).
-tryMoveSor(NoMatWS,tree([Licensor], MGFunc, Subl, Subr), Items, NoFit, NewWS) :- append(NoMatWS, [tree([Licensor|NoFit],MGFunc, Subl, Subr)], NewNoMatWS), mg_function(NewNoMatWS,Items,NewWS).       % no match found in the whole chain, try if other feature pairs can be found in the rest of the work space
+tryMoveSor(NoMatWS,tree([Licensor], MGFunc, Subl, Subr), Items, NoFit, NewWS) :- (gDebugMode -> nl, writeln('TryMove Licensor No Match, try other Feature in WS');true),append(NoMatWS, [tree([Licensor|NoFit],MGFunc, Subl, Subr)], NewNoMatWS), mg_function(NewNoMatWS,Items,NewWS).       % no match found in the whole chain, try if other feature pairs can be found in the rest of the work space
 tryMoveSor(NoMatWS,tree([Licensor,NotLicensee|Chains],MGFunc , Subl, Subr), Items, NoFit, NewWS) :-                                                                         %  next item in chain not a match, try the next one
-                                                  append(NoFit, [NotLicensee], NewNoFit), tryMoveSor(NoMatWS,tree([Licensor|Chains],MGFunc, Subl, Subr), Items, NewNoFit, NewWS).
+                                                  (gDebugMode -> nl,writeln('TryMove Licensor No Match, try matching with other Item in WS');true),append(NoFit, [NotLicensee], NewNoFit), tryMoveSor(NoMatWS,tree([Licensor|Chains],MGFunc, Subl, Subr), Items, NewNoFit, NewWS).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % tryMove triggered by Licensee feature, This is just because of completion. This should never occur, or be cought by the checkSpace
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-tryMoveSee(NoMatWS,Licensee,Items,NewWS) :- append(NoMatWS,[Licensee],NewNoMatWS), mg_function(NewNoMatWS,Items,NewWS).                                                                  % Licensees as the head feature are dead ends, let's see if the checkSpace catches this one
+tryMoveSee(NoMatWS,Licensee,Items,NewWS) :- (gDebugMode -> nl,writeln('TryMove Licensee You made a bad LI to reach this');true),append(NoMatWS,[Licensee],NewNoMatWS), mg_function(NewNoMatWS,Items,NewWS).                                                                  % Licensees as the head feature are dead ends, let's see if the checkSpace catches this one
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % the actual MG functions
@@ -207,7 +209,7 @@ move2(tree([(W,[+X| Fs],L),(V,[-X| Fps],M)|Chains],MGFunc, Subl, Subr), NoFit, N
 % NB: funkt derzeit nicht, bzw. bringt keinen Abbruch hervor falls mehr als ein Baum übergeben wird
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-checkSpace([WS],WS).
+checkSpace([WS],WS):- (gDebugMode -> writeln("\nfound legal tree");true).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -217,7 +219,7 @@ checkSpace([WS],WS).
 
 checkSMC(_,[]):- true.
 checkSMC(+Selector,[(_,[-Selector|_],_)|_]):-
-    !,false.
+    !,(gDebugMode -> writeln("SMC violated");true),false.
 checkSMC(+Selector,[_|Chains]):-
   checkSMC(+Selector,Chains).
 
@@ -245,17 +247,17 @@ makeLambda(A>>B,Y,LambdaOut) :- length(A,2), call(A>>B,Y,LambdaOut); LambdaOut =
 % Examples
 %
 % Maus frisst Käse und Katze frisst Maus
-% generate([li(['Maus'],[d]),li(['Katze'],[d]),li([frisst],[=d,=d,v]),li(['Kaese'],[d]),li(['Maus'],[d]),li([frisst],[=d,=d,v]),li([und],[=c,=c,c]),li([],[=v,c]),li([],[=v,c])],DT).
+% generateExp([li(['Maus'],[d]),li(['Katze'],[d]),li([frisst],[=d,=d,v]),li(['Kaese'],[d]),li(['Maus'],[d]),li([frisst],[=d,=d,v]),li([und],[=c,=c,c]),li([],[=v,c]),li([],[=v,c])],DT).
 %
 %  e Maus frisst Kaese und e Katze frisst Maus
-% generate([li(['Maus'],[d]),li(['Katze'],[d]),li([frisst],[=d,=d,v]),li(['Kaese'],[d]),li(['Maus'],[d]),li([frisst],[=d,=d,v]),li([und],[=c,=c,c]),li([e],[=v,c]),li([e],[=v,c])],DT).
+% generateExp([li(['Maus'],[d]),li(['Katze'],[d]),li([frisst],[=d,=d,v]),li(['Kaese'],[d]),li(['Maus'],[d]),li([frisst],[=d,=d,v]),li([und],[=c,=c,c]),li([e],[=v,c]),li([e],[=v,c])],DT).
 %
 % Katze frisst Maus
-% generate([li(['Maus'],[d]),li(['Katze'],[d]),li([frisst],[=d,=d,v])],DT).
+% generateExp([li(['Maus'],[d]),li(['Katze'],[d]),li([frisst],[=d,=d,v])],DT).
 %
 % achtunddreißig
-% generate([li([],[=c1,+ssi,+zeh,+un,c1,-ssi]),li(['ßig'],[=c1,+ssi,cundZIG]),li([drei],[c1,-ssi,-zeh,-un]),li([],[=c1,+zi,c1]),li([acht],[c1,-zi,-zeh,-un]),li([],[=c1,+zeh,c1]),li([],[=c2,+taus_,c3,-taus]),li([],[=c3,+taus,c3]),li([],[=c3,c4]),li([und],[=cundZIG,=c1,+un,c2,-taus_])],DT).
+% generateExp([li([],[=c1,+ssi,+zeh,+un,c1,-ssi]),li(['ßig'],[=c1,+ssi,cundZIG]),li([drei],[c1,-ssi,-zeh,-un]),li([],[=c1,+zi,c1]),li([acht],[c1,-zi,-zeh,-un]),li([],[=c1,+zeh,c1]),li([],[=c2,+taus_,c3,-taus]),li([],[=c3,+taus,c3]),li([],[=c3,c4]),li([und],[=cundZIG,=c1,+un,c2,-taus_])],DT).
 %
 % fünftausendvierzehn
-% generate([li([],[=c1,+zi,c1]),li([vier],[c1,-zi,-zeh,-un]),li([],[=c1,+zeh,+un,c1,-zeh]),li([zehn],[=c1,+zeh,c2,-taus_]),li([],[=c2,+taus_,c3,-taus]),li([],[=c3,+taus,c3]),li([],[=c1,+zi,c1]),li(['fünf'],[c1,-zi,-zeh,-un]),li([],[=c1,+zeh,c1]),li([],[=c1,+un,c2,-taus_]),li([],[=c2,+taus_,c3,-taus]),li([tausend],[=c3,=c3,+taus,c4])],DT).
+% generateExp([li([],[=c1,+zi,c1]),li([vier],[c1,-zi,-zeh,-un]),li([],[=c1,+zeh,+un,c1,-zeh]),li([zehn],[=c1,+zeh,c2,-taus_]),li([],[=c2,+taus_,c3,-taus]),li([],[=c3,+taus,c3]),li([],[=c1,+zi,c1]),li(['fünf'],[c1,-zi,-zeh,-un]),li([],[=c1,+zeh,c1]),li([],[=c1,+un,c2,-taus_]),li([],[=c2,+taus_,c3,-taus]),li([tausend],[=c3,=c3,+taus,c4])],DT).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
