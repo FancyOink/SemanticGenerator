@@ -1,3 +1,4 @@
+:- module(spellOut,[spellCheck/4]).
 % file: spellOut.pl
 % origin author : J. Kuhn
 % origin date: May 2021
