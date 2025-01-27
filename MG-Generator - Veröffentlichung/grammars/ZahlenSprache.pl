@@ -1,16 +1,4 @@
-startCategory(c).
-
-['es gibt'] :: ([=n, c],[A,Out] >> (Out = gibt(A))).
-[liegen] :: ([=n,=n,c],[A,B,Out] >> (Out = liegt(B,A))).
-['Feld'] :: ([=f,n],[A,Out]>> (Out = feld(A))).
-[im] :: ([=n,n],[A,Out]>>(Out = modifyLoc(A))).
-
-['Bananen'] :: ([n],banane).
-['Kaese'] :: ([n],kaese).
-
-[] :: ([=c4, =c4, f], [A,B,Out] >> (Out = xBy(B,A))).
-[] :: ([=n, =c4, n],[A,B,Out] >> (Out = modify(B,A))).
-
+startCategory(c4).
 [zig] :: ([=c1, +zi, c2, -tausU],[A,Out]>> (Out = mal10(A))). % 10 * A	%Hauptfunktionen
 [zig] :: ([=c1, +zi, cundZIG],[A,Out]>> (Out = mal10A(A))). % 10 * A
 [und] :: ([ =cundZIG, =cun, c2, -tausU],[A,B,Out] >> (Out = und(B,A))). % A + B
