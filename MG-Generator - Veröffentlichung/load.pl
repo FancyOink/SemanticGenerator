@@ -12,7 +12,7 @@
 
 :- ['select'].
 :- ['fillIn'].
-:- ['spellOut'].
+:- ['spellCheck'].
 :- ['lambdaWorkspace'].
 :- ['helpers/painter'].
 :- ['helpers/stuff'].
