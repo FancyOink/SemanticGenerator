@@ -10,7 +10,7 @@
 :- op(500, fx, =). % for selection features
 %:- op(500, fx, #). % for category features, if the need arises to redefine the sign of Category features
 
-:- ['select'].
+:- ['lambdaSelect'].
 :- ['fillIn'].
 :- ['spellCheck'].
 :- ['lambdaWorkspace'].
