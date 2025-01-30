@@ -1,21 +1,21 @@
-:- module(fillIn,[epsilonSelectFkt/2]).
-% file: fillIn.pl
+:- module(ypsilonSelect,[ypsilonSelectFkt/2]).
+% file: ypsilonSelect.pl
 % origin author : J. Kuhn
 % origin date: August 2021
-% purpose: selects epsilone-LI from a Lexicon
+% purpose: selects ypsilon-LI from a Lexicon
 
 %fDebugMode.
 fDebugMode :- false.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% epsilonSelectFkt(+[lambdaLi(W,Fs,Lambda,T,G)],-[li(W,Fs,Lambda)])
+% ypsilonSelectFkt(+[lambdaLi(W,Fs,Lambda,T,G)],-[li(W,Fs,Lambda)])
 %
 % This function inserts Epsilon-Li, if necessary.
 % NB: mann könnte ein künstliches LI machen, welches nur die Startkategorie hat. Dies würde aber zu einem Merge mehr führen als üblich.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-epsilonSelectFkt(Input,Output):-
+ypsilonSelectFkt(Input,Output):-
   checkFinishStart(Input,Status),                          % check if we are already finished
   ( isEmpty(Status,true),writeln("List is ok"),            % no Epsilon required, fast forward to Worspace
     changeToLI(Input,Output);
@@ -190,7 +190,7 @@ fillYpsilon(PrepInput,Status,FilledList):-
 %     1- herausfinden, an welcher Stelle es stopt -> FlatStatus
 %     2- dorthin gehen
 %     3- nachschauen welche Feature-Kombination vorlegt
-%     4- richtiges epsilon-Li raussuchen
+%     4- richtiges ypsilon-Li raussuchen
 %     5- nur diese Stelle nochmal probieren
 %       -> wenn es nicht geht -> 3
 %       -> Abbruchbedingung für Schleife (Gut und Böse) bedenken
@@ -447,7 +447,7 @@ connectLisSelCat(Li,[=F|RestFs],[ G|LLiFs],Group,RestLi,AlteredLi,NewFs,AlteredR
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 insertY(Li,[],_,Li):- (fDebugMode -> writeln("\nReached bottom");true).
 insertY([lambdaLi(Word,Features,Lambda,Depth,Group)|RestInput],[lambdaLi(WY,FsY,LY,_,_)|RestY],Group,Out):-
-  (fDebugMode -> writeln("\nInsert Epsilon");true),
+  (fDebugMode -> writeln("\nInsert Ypsilon");true),
   NewDepth is Depth + 1, append(Group,[1],NewGroup),
   insertY([lambdaLi(Word,Features,Lambda,NewDepth,NewGroup)],RestY,NewGroup,DeeperOut), % NB:an dieser Stelle nicht RestInput mitmachen, sonder RestInput seperat behandeln, um verbleibende Skopus-Li richtig einzuordnen
   length([lambdaLi(WY,FsY,LY,_,_)|RestY],YLength),
@@ -691,7 +691,7 @@ removePairs([=F|PosY],[ F|NegY],NewPos,NewNeg):- removePairs(PosY,NegY,NewPos,Ne
 % flattenForWS(+[(lambdaLi(W,Fs,Lambda,Depth,Group),[InputLambdaLi])]],-[lambdaLi(W,Fs,Lambda,Depth,Group)])
 %
 % This function sorts the lambda-Li according to their depth and group, with the root at the beginning and flattens the List
-% NB: muss auch Tiefe und Gruppierung neuberechnen, da, Epsilon-Li erstmal direkt vor den jeweiligen Lambda-Li in der Liste eingefügt sind
+% NB: muss auch Tiefe und Gruppierung neuberechnen, da, Ypsilon-Li erstmal direkt vor den jeweiligen Lambda-Li in der Liste eingefügt sind
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
