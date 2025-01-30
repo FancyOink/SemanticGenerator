@@ -11,7 +11,7 @@
 %:- op(500, fx, #). % for category features, if the need arises to redefine the sign of Category features
 
 :- ['lambdaSelect'].
-:- ['fillIn'].
+:- ['ypsilonSelect'].
 :- ['spellCheck'].
 :- ['lambdaWorkspace'].
 :- ['helpers/painter'].
