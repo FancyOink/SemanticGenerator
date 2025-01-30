@@ -1,5 +1,5 @@
-:- module(select,[lambdaSelectFkt/2]).
-% file: select.pl
+:- module(lambdaSelect,[lambdaSelectFkt/2]).
+% file: lambdaSelect.pl
 % origin author : J. Kuhn
 % origin date: May 2021
 % purpose: selects LI from a Lexicon according to predicate logical expression
